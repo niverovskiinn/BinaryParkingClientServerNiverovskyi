@@ -2,28 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using BinaryParkingClientServerNiverovskyi.Models.Transaction;
 
 namespace BinaryParkingClientServerNiverovskyi.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class TransactionController : Controller
     {
         private static List<Transaction> _transactions = new List<Transaction>();
         private static List<Transaction> _minuteTransactions = new List<Transaction>();
 
-        private readonly IHostingEnvironment _appEnvironment;
-
-        public TransactionController(IHostingEnvironment appEnvironment)
+        public TransactionController()
         {
-            _appEnvironment = appEnvironment;
         }
 
         private static void AddToFile(Transaction transaction)
         {
             using (var file =
-                new StreamWriter(@"Files/Transactions.log", true))
+                new StreamWriter(@"FileTransactions/Transactions.log", true))
             {
                 file.WriteLine($"{transaction._dateTime} - ID:{transaction.Id} - Tariff: {transaction._tariff}");
             }
@@ -45,22 +43,21 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("GetMinuteTransactions")]
         public ActionResult<IEnumerable<Transaction>> GetMinuteTransactions()
         {
             UpdateMinuteTransactions();
             return _minuteTransactions;
         }
 
-        [HttpGet]
-        public IActionResult GetFile()
+        [HttpGet("GetTransactions")]
+        public string GetTransactions()
         {
-            return PhysicalFile(Path.Combine(_appEnvironment.ContentRootPath, "Files/Transactions.log"),
-                "application/log",
-                "Transactions.log");
+            var str = System.IO.File.ReadAllText(@"FileTransactions/Transactions.log");
+            return str;
         }
 
-        [HttpGet]
+        [HttpGet("MinuteSumOfIncome")]
         public double MinuteSumOfIncome()
         {
             UpdateMinuteTransactions();

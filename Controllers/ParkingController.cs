@@ -9,32 +9,41 @@ using BinaryParkingClientServerNiverovskyi.Models.Transaction;
 
 namespace BinaryParkingClientServerNiverovskyi.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class ParkingController : ControllerBase
     {
-        private List<Vehicle> _vehicles = new List<Vehicle>();
+        private static List<Vehicle> _vehicles;
 
-        private Parking _parking = new Parking
-        {
-            CurrentCapacity = 0,
-            ParkingSettings = new ParkingSettings
-            {
-                PaymentPeriod = 5,
-                PenaltyRatio = 2.5,
-                MaxCapacity = 10,
-                Balance = 0,
-                Tariffs =
-                {
-                    {VehicleType.Bus, 3.5},
-                    {VehicleType.PassengerCar, 2},
-                    {VehicleType.Motorcycle, 1},
-                    {VehicleType.Truck, 5}
-                }
-            }
-        };
+        private static Parking _parking;
+
+        public static int ID = 1;
+        private static Thread _thread;
 
         public ParkingController()
         {
-            new Thread(TakeMoney).Start();
+            _vehicles = _vehicles ?? new List<Vehicle>();
+            _parking = _parking ?? new Parking
+            {
+                CurrentCapacity = 0,
+                ParkingSettings = new ParkingSettings
+                {
+                    PaymentPeriod = 5,
+                    PenaltyRatio = 2.5,
+                    MaxCapacity = 10,
+                    Balance = 0,
+                    Tariffs =
+                    {
+                        {VehicleType.Bus, 3.5},
+                        {VehicleType.PassengerCar, 2},
+                        {VehicleType.Motorcycle, 1},
+                        {VehicleType.Truck, 5}
+                    }
+                }
+            };
+            _thread = _thread ?? new Thread(TakeMoney);
+            if (!_thread.IsAlive)
+                _thread.Start();
         }
 
         private void TakeMoney()
@@ -64,34 +73,60 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
             }
         }
 
-        [HttpPost]
-        public ActionResult<IEnumerable<Vehicle>> EditSettings([FromBody] ParkingSettings parkingSettings)
+        [HttpGet("EditSettings")]
+        public ActionResult EditSettings(double balance, uint paymentperiod, double penalty, uint maxc, int bust,
+            int truckt, int cart, int motot)
         {
-            if (parkingSettings == null)
-                return BadRequest();
-            _parking.ParkingSettings = parkingSettings;
-            return Ok(parkingSettings);
+            _parking.ParkingSettings.PaymentPeriod = paymentperiod;
+            _parking.ParkingSettings.PenaltyRatio = penalty;
+            _parking.ParkingSettings.MaxCapacity = maxc;
+            _parking.ParkingSettings.Balance = balance;
+            _parking.ParkingSettings.Tariffs[VehicleType.Bus] = bust;
+            _parking.ParkingSettings.Tariffs[VehicleType.PassengerCar] = cart;
+            _parking.ParkingSettings.Tariffs[VehicleType.Motorcycle] = motot;
+            _parking.ParkingSettings.Tariffs[VehicleType.Truck] = truckt;
+            return Ok();
         }
 
-        [HttpGet]
+        [HttpGet("GetAllVehicles")]
         public ActionResult<IEnumerable<Vehicle>> GetAllVehicles()
         {
             return _vehicles;
         }
 
-        [HttpGet]
+        [HttpGet("Balance")]
         public double Balance()
         {
             return _parking.ParkingSettings.Balance;
         }
 
-        [HttpGet]
-        public (uint, uint) PlacesFreeEngaged()
+        [HttpGet("MinId")]
+        public int MinId()
         {
-            return (_parking.ParkingSettings.MaxCapacity - _parking.CurrentCapacity, _parking.CurrentCapacity);
+            return _vehicles.Min(vehicle => vehicle.Id);
         }
 
-        [HttpGet]
+        [HttpGet("MaxId")]
+        public int MaxId()
+        {
+            return _vehicles.Max(vehicle => vehicle.Id);
+        }
+
+
+        [HttpGet("PlacesFree")]
+        public uint PlacesFree()
+        {
+            return _parking.ParkingSettings.MaxCapacity - _parking.CurrentCapacity;
+        }
+
+        [HttpGet("PlacesEngaged")]
+        public uint PlacesEngaged()
+        {
+            return _parking.CurrentCapacity;
+        }
+
+
+        [HttpGet("GetOne")]
         public ActionResult<IEnumerable<Vehicle>> GetOne(int id)
         {
             var vehicle = _vehicles.FirstOrDefault(x => x.Id == id);
@@ -100,29 +135,33 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
             return new ObjectResult(vehicle);
         }
 
-        [HttpPost]
-        public IActionResult Add([FromBody] Vehicle vehicle)
+        [HttpGet("Add")]
+        public IActionResult Add(int type, int balance)
         {
-            if (vehicle == null)
-                return BadRequest();
-
-            _vehicles.Add(vehicle);
-            return Ok(vehicle);
+            _vehicles.Add(new Vehicle
+            {
+                Id = ID++,
+                TypeOfVehicle = (VehicleType) type,
+                Balance = balance,
+                LastPaidTime = DateTime.Now
+            });
+            _parking.CurrentCapacity++;
+            return Ok();
         }
 
 
-        [HttpDelete]
+        [HttpGet("Remove")]
         public IActionResult Remove(int id)
         {
             var vehicle = _vehicles.FirstOrDefault(x => x.Id == id);
             if (vehicle == null)
                 return NotFound();
-
             _vehicles.Remove(vehicle);
+            _parking.CurrentCapacity--;
             return Ok(vehicle);
         }
 
-        [HttpGet]
+        [HttpGet("RechargeBalance")]
         public IActionResult RechargeBalance(int id, double sum)
         {
             var vehicle = _vehicles.FirstOrDefault(x => x.Id == id);
@@ -130,6 +169,14 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
                 return NotFound();
             vehicle.Balance += sum;
             return Ok(vehicle);
+        }
+
+        [HttpGet("Quit")]
+        public IActionResult Quit()
+        {
+            _thread.Abort();
+
+            return Ok();
         }
     }
 }
