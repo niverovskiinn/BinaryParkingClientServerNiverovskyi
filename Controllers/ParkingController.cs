@@ -52,7 +52,12 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
                         : _parking.ParkingSettings.Tariffs[vehicle.TypeOfVehicle];
                     vehicle.Balance -= tariff;
                     _parking.ParkingSettings.Balance += tariff;
-                    //TODO ADD transaction
+                    TransactionController.Add(new Transaction
+                    {
+                        _dateTime = DateTime.Now,
+                        _tariff = tariff,
+                        Id = vehicle.Id
+                    });
                 }
 
                 Thread.Sleep(1000);
@@ -69,7 +74,7 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Vehicle>> Get()
+        public ActionResult<IEnumerable<Vehicle>> GetAllVehicles()
         {
             return _vehicles;
         }

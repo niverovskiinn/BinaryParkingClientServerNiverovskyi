@@ -10,8 +10,8 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
 {
     public class TransactionController : Controller
     {
-        private List<Transaction> _transactions = new List<Transaction>();
-        private List<Transaction> _minuteTransactions = new List<Transaction>();
+        private static List<Transaction> _transactions = new List<Transaction>();
+        private static List<Transaction> _minuteTransactions = new List<Transaction>();
 
         private readonly IHostingEnvironment _appEnvironment;
 
@@ -20,16 +20,16 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
             _appEnvironment = appEnvironment;
         }
 
-        private void AddToFile(Transaction transaction)
+        private static void AddToFile(Transaction transaction)
         {
             using (var file =
-                new System.IO.StreamWriter(@"Transactions.log", true))
+                new StreamWriter(@"Transactions.log", true))
             {
                 file.WriteLine($"{transaction._dateTime} - ID:{transaction.Id} - Tariff: {transaction._tariff}");
             }
         }
 
-        public void Add(Transaction transaction)
+        public static void Add(Transaction transaction)
         {
             _transactions.Add(transaction);
             _minuteTransactions.Add(transaction);
