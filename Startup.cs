@@ -1,11 +1,8 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using BinaryParkingClientServerNiverovskyi.Models.Transaction;
-using BinaryParkingClientServerNiverovskyi.Models.Vehicle;
 
 
 namespace BinaryParkingClientServerNiverovskyi
@@ -23,12 +20,7 @@ namespace BinaryParkingClientServerNiverovskyi
         //container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //TODO parking
-//            services.AddSingleton();
-            services.AddDbContext<VehicleContext>(opt =>
-                opt.UseInMemoryDatabase("VehicleList"));
-            services.AddDbContext<TransactionContext>(opt =>
-                opt.UseInMemoryDatabase("TransactionList"));
+            //TODO parking singleton
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 

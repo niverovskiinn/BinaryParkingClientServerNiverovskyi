@@ -10,13 +10,14 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
 {
     public class TransactionController : Controller
     {
-        private TransactionContext _transactionContext;
+        private List<Transaction> _transactions = new List<Transaction>();
+        private List<Transaction> _minuteTransactions = new List<Transaction>();
+
         private readonly IHostingEnvironment _appEnvironment;
 
-        public TransactionController(IHostingEnvironment appEnvironment, TransactionContext transactionContext)
+        public TransactionController(IHostingEnvironment appEnvironment)
         {
             _appEnvironment = appEnvironment;
-            _transactionContext = transactionContext;
         }
 
         private void AddToFile(Transaction transaction)
@@ -30,28 +31,25 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
 
         public void Add(Transaction transaction)
         {
-            _transactionContext.Transactions.Add(transaction);
-            _transactionContext.MinuteTransactions.Add(transaction);
-            _transactionContext.SaveChanges();
+            _transactions.Add(transaction);
+            _minuteTransactions.Add(transaction);
             AddToFile(transaction);
         }
 
         private void UpdateMinuteTransactions()
         {
-            if (!_transactionContext.MinuteTransactions.Any()) return;
-            while ((DateTime.Now - _transactionContext.MinuteTransactions.ToList()[0]._dateTime).TotalMinutes > 1)
+            if (!_minuteTransactions.Any()) return;
+            while ((DateTime.Now - _minuteTransactions[0]._dateTime).TotalMinutes > 1)
             {
-                _transactionContext.MinuteTransactions.Remove(_transactionContext.MinuteTransactions.ToList()[0]);
+                _minuteTransactions.Remove(_minuteTransactions.ToList()[0]);
             }
-
-            _transactionContext.SaveChanges();
         }
 
         [HttpGet]
         public ActionResult<IEnumerable<Transaction>> GetMinuteTransactions()
         {
             UpdateMinuteTransactions();
-            return _transactionContext.MinuteTransactions.ToList();
+            return _minuteTransactions;
         }
 
         [HttpGet]
@@ -66,7 +64,7 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
         public double MinuteSumOfIncome()
         {
             UpdateMinuteTransactions();
-            return Enumerable.Sum(_transactionContext.MinuteTransactions, transaction => transaction._tariff);
+            return _minuteTransactions.Sum(transaction => transaction._tariff);
         }
     }
 }
