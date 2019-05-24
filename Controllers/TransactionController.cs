@@ -23,7 +23,7 @@ namespace BinaryParkingClientServerNiverovskyi.Controllers
         private static void AddToFile(Transaction transaction)
         {
             using (var file =
-                new StreamWriter(@"Transactions.log", true))
+                new StreamWriter(@"Files/Transactions.log", true))
             {
                 file.WriteLine($"{transaction._dateTime} - ID:{transaction.Id} - Tariff: {transaction._tariff}");
             }
